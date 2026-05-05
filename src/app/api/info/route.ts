@@ -45,10 +45,13 @@ export async function GET(req: Request) {
     const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', isWindows ? 'yt-dlp.exe' : 'yt-dlp');
 
     if (isYouTube) {
-      console.log('Processing YouTube URL with play-dl:', url);
       try {
-        // FAST ROUTE: Use play-dl for instantaneous YouTube metadata
-        const info = await play.video_info(url);
+        console.log('Fetching YouTube info with play-dl:', url);
+        // Add a 10-second timeout to play-dl to prevent Gateway timeouts
+        const info = await Promise.race([
+          play.video_info(url),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('play-dl timeout')), 10000))
+        ]) as any;
         
         const validFormats = info.format.filter(f => f.url);
         
