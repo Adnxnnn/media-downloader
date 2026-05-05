@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import util from 'util';
 import path from 'path';
+import os from 'os';
 import play from 'play-dl';
 
 const execPromise = util.promisify(exec);
@@ -56,7 +57,8 @@ export async function GET(req: Request) {
 
     } else if (isInstagram) {
       // INSTAGRAM ROUTE: Use yt-dlp-exec
-      const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', 'yt-dlp.exe');
+      const isWindows = os.platform() === 'win32';
+      const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', isWindows ? 'yt-dlp.exe' : 'yt-dlp');
       const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
 

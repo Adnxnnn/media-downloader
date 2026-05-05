@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import util from 'util';
 import path from 'path';
+import os from 'os';
 
 const execPromise = util.promisify(exec);
 
@@ -26,9 +27,10 @@ export async function GET(req: Request) {
     }
 
     let downloadUrl = '';
+    const isWindows = os.platform() === 'win32';
+    const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', isWindows ? 'yt-dlp.exe' : 'yt-dlp');
 
     if (isYouTube) {
-      const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', 'yt-dlp.exe');
       const { stdout } = await execPromise(`"${ytdlpPath}" "${ytUrl}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
       
@@ -39,7 +41,6 @@ export async function GET(req: Request) {
       }
       downloadUrl = format.url;
     } else if (isInstagram) {
-      const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', 'yt-dlp.exe');
       const { stdout } = await execPromise(`"${ytdlpPath}" "${ytUrl}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
       
