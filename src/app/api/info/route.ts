@@ -23,47 +23,76 @@ export async function GET(req: Request) {
   }
 
   try {
+    const isWindows = os.platform() === 'win32';
+    const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', isWindows ? 'yt-dlp.exe' : 'yt-dlp');
+
     if (isYouTube) {
-      // FAST ROUTE: Use play-dl for instantaneous YouTube metadata
-      const info = await play.video_info(url);
-      
-      const validFormats = info.format.filter(f => f.url && !f.mimeType?.includes('webm'));
-      
-      const videoFormats = validFormats.filter((f: any) => f.qualityLabel);
-      videoFormats.sort((a: any, b: any) => parseInt(b.qualityLabel || '0') - parseInt(a.qualityLabel || '0'));
+      console.log('Processing YouTube URL with play-dl:', url);
+      try {
+        // FAST ROUTE: Use play-dl for instantaneous YouTube metadata
+        const info = await play.video_info(url);
+        
+        const validFormats = info.format.filter(f => f.url && !f.mimeType?.includes('webm'));
+        
+        const videoFormats = validFormats.filter((f: any) => f.qualityLabel);
+        videoFormats.sort((a: any, b: any) => parseInt(b.qualityLabel || '0') - parseInt(a.qualityLabel || '0'));
 
-      const audioFormats = validFormats.filter((f: any) => !f.qualityLabel && f.audioQuality);
-      audioFormats.sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
+        const audioFormats = validFormats.filter((f: any) => !f.qualityLabel && f.audioQuality);
+        audioFormats.sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
 
-      return NextResponse.json({
-        title: info.video_details.title,
-        thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1]?.url,
-        duration: info.video_details.durationInSec,
-        videoFormats: videoFormats.map((f: any) => ({
-          url: f.url,
-          itag: f.itag,
-          qualityLabel: f.qualityLabel,
-          bitrate: f.bitrate,
-          mimeType: f.mimeType
-        })),
-        audioFormats: audioFormats.map((f: any) => ({
-          url: f.url,
-          itag: f.itag,
-          qualityLabel: f.audioQuality,
-          bitrate: f.bitrate,
-          mimeType: f.mimeType
-        })),
-      });
+        return NextResponse.json({
+          title: info.video_details.title,
+          thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1]?.url,
+          duration: info.video_details.durationInSec,
+          videoFormats: videoFormats.map((f: any) => ({
+            url: f.url,
+            itag: f.itag,
+            qualityLabel: f.qualityLabel,
+            bitrate: f.bitrate,
+            mimeType: f.mimeType
+          })),
+          audioFormats: audioFormats.map((f: any) => ({
+            url: f.url,
+            itag: f.itag,
+            qualityLabel: f.audioQuality,
+            bitrate: f.bitrate,
+            mimeType: f.mimeType
+          })),
+        });
+      } catch (playError: any) {
+        console.warn('play-dl failed, falling back to yt-dlp:', playError.message);
+        // Fallback to yt-dlp if play-dl fails (e.g. due to rate limits)
+        const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
+        const info = JSON.parse(stdout);
+        
+        const validFormats = info.formats.filter((f: any) => f.url && f.ext !== 'webm');
+        const videoFormatsRaw = validFormats.filter((f: any) => f.vcodec !== 'none');
+        const audioFormatsRaw = validFormats.filter((f: any) => f.vcodec === 'none' && f.acodec !== 'none');
+
+        return NextResponse.json({
+          title: info.title,
+          thumbnail: info.thumbnail,
+          duration: info.duration,
+          videoFormats: videoFormatsRaw.map((f: any) => ({
+            url: f.url,
+            itag: f.format_id,
+            qualityLabel: f.height ? `${f.height}p` : f.format_note,
+            mimeType: `video/${f.ext}`
+          })),
+          audioFormats: audioFormatsRaw.map((f: any) => ({
+            url: f.url,
+            itag: f.format_id,
+            qualityLabel: f.format_note || 'Audio',
+            mimeType: `audio/${f.ext}`
+          })),
+        });
+      }
 
     } else if (isInstagram) {
-      // INSTAGRAM ROUTE: Use yt-dlp-exec
-      const isWindows = os.platform() === 'win32';
-      const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', isWindows ? 'yt-dlp.exe' : 'yt-dlp');
+      console.log('Processing Instagram URL with yt-dlp:', url);
       const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
 
-      // Instagram usually has one main video format.
-      // We will provide a Video option and a simulated Audio (MP3) option.
       const bestVideoId = info.format_id || 'best';
       
       return NextResponse.json({
@@ -78,7 +107,7 @@ export async function GET(req: Request) {
         }],
         audioFormats: [{
           url: info.url,
-          itag: 'audio_extract', // Special itag to tell our proxy to convert to MP3
+          itag: 'audio_extract',
           qualityLabel: 'High Quality MP3',
           mimeType: 'audio/mp3'
         }],
@@ -86,7 +115,7 @@ export async function GET(req: Request) {
     }
 
   } catch (error: any) {
-    console.error('Info Error:', error.message);
-    return NextResponse.json({ error: 'Failed to process link. Please check if the URL is public and valid.' }, { status: 500 });
+    console.error('Final Info Error:', error);
+    return NextResponse.json({ error: 'Failed to process link: ' + error.message }, { status: 500 });
   }
 }
