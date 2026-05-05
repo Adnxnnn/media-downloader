@@ -55,17 +55,21 @@ export async function GET(req: Request) {
           title: info.video_details.title,
           thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1]?.url,
           duration: info.video_details.durationInSec,
-          videoFormats: videoFormats.map((f: any) => ({
-            url: f.url,
-            itag: f.itag,
-            qualityLabel: f.qualityLabel,
-            bitrate: f.bitrate,
-            mimeType: f.mimeType
-          })),
+          videoFormats: videoFormats.map((f: any) => {
+            const hasAudio = f.hasAudio || f.audioBitrate || f.audioQuality;
+            return {
+              url: f.url,
+              itag: f.itag,
+              qualityLabel: `${f.qualityLabel}${f.fps ? ` (${f.fps}fps)` : ''}${hasAudio ? ' + Audio' : ' (No Audio)'}`,
+              bitrate: f.bitrate,
+              mimeType: f.mimeType,
+              isCombined: !!hasAudio
+            };
+          }),
           audioFormats: audioFormats.map((f: any) => ({
             url: f.url,
             itag: f.itag,
-            qualityLabel: f.audioQuality,
+            qualityLabel: `${f.audioQuality || 'Standard'} • ${Math.round((f.bitrate || 0) / 1000)}kbps`,
             bitrate: f.bitrate,
             mimeType: f.mimeType
           })),
@@ -87,16 +91,20 @@ export async function GET(req: Request) {
           title: info.title,
           thumbnail: info.thumbnail,
           duration: info.duration,
-          videoFormats: videoFormatsRaw.map((f: any) => ({
-            url: f.url,
-            itag: f.format_id,
-            qualityLabel: f.height ? `${f.height}p` : f.format_note,
-            mimeType: `video/${f.ext}`
-          })),
+          videoFormats: videoFormatsRaw.map((f: any) => {
+            const hasAudio = f.acodec !== 'none';
+            return {
+              url: f.url,
+              itag: f.format_id,
+              qualityLabel: `${f.height ? `${f.height}p` : f.format_note}${f.fps ? ` (${f.fps}fps)` : ''}${hasAudio ? ' + Audio' : ' (No Audio)'}`,
+              mimeType: `video/${f.ext}`,
+              isCombined: hasAudio
+            };
+          }),
           audioFormats: audioFormatsRaw.map((f: any) => ({
             url: f.url,
             itag: f.format_id,
-            qualityLabel: f.format_note || 'Audio',
+            qualityLabel: `${f.format_note || 'Audio'} • ${Math.round(f.abr || 0)}kbps`,
             mimeType: `audio/${f.ext}`
           })),
         };
