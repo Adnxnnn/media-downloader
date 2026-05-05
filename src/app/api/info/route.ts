@@ -43,7 +43,7 @@ export async function GET(req: Request) {
         // FAST ROUTE: Use play-dl for instantaneous YouTube metadata
         const info = await play.video_info(url);
         
-        const validFormats = info.format.filter(f => f.url && !f.mimeType?.includes('webm'));
+        const validFormats = info.format.filter(f => f.url);
         
         const videoFormats = validFormats.filter((f: any) => f.qualityLabel);
         videoFormats.sort((a: any, b: any) => parseInt(b.qualityLabel || '0') - parseInt(a.qualityLabel || '0'));
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
         const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
         const info = JSON.parse(stdout);
         
-        const validFormats = info.formats.filter((f: any) => f.url && f.ext !== 'webm');
+        const validFormats = info.formats.filter((f: any) => f.url);
         const videoFormatsRaw = validFormats.filter((f: any) => f.vcodec !== 'none');
         const audioFormatsRaw = validFormats.filter((f: any) => f.vcodec === 'none' && f.acodec !== 'none');
 

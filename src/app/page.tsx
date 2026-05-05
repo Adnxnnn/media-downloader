@@ -94,163 +94,183 @@ export default function Home() {
 
   return (
     <main className="main-container">
-      <div className="hero-section">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="hero-content"
-        >
-          <div className="badge">
-            <span className="sparkle">✨</span> Advanced Options
-          </div>
-          
-          <h1 className="title">
-            Ultimate Media <span className="text-gradient">Downloader</span>
-          </h1>
-          <p className="subtitle">
-            Download your favorite YouTube and Instagram videos with full granular control over resolution, video formats, and audio extraction bitrates.
-          </p>
-
-          <form onSubmit={handleFetch} className="glass-panel form-container">
-            <div className="input-group">
-              <div className="input-icon-wrapper">
-                {detectPlatform(url) === 'youtube' ? (
-                  <MonitorPlay className="platform-icon text-red-500" color="#ef4444" />
-                ) : (
-                  <Play className="platform-icon" color="#9ca3af" />
-                )}
-              </div>
-              <input
-                type="text"
-                placeholder="Paste YouTube or Instagram link here..."
-                className="glass-input custom-input"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
-              <button 
-                type="submit" 
-                className="glass-button submit-btn"
-                disabled={loading || !url}
-              >
-                {loading ? <Loader2 className="spinner" /> : 'Fetch Formats'}
-              </button>
-            </div>
-          </form>
-
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-              className="error-message glass-panel"
-            >
-              {error}
-            </motion.div>
-          )}
-
-        </motion.div>
+      {/* Animated Background Gradients */}
+      <div className="bg-animation">
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
       </div>
 
-      {/* Media Preview & Options Section */}
-      <AnimatePresence>
-        {mediaInfo && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.5 }}
-            className="results-container"
-          >
-            <div className="glass-panel media-card">
-              <div className="media-header">
-                {mediaInfo.thumbnail && (
-                  <img src={mediaInfo.thumbnail} alt={mediaInfo.title} className="thumbnail" />
-                )}
-                <div className="media-info">
-                  <h3 className="media-title">{mediaInfo.title || 'Unknown Title'}</h3>
-                  <p className="media-meta">
-                    {detectPlatform(url) === 'youtube' ? 'YouTube' : 'Instagram'} {mediaInfo.duration ? `• ${mediaInfo.duration}s` : ''}
-                  </p>
-                </div>
-              </div>
+      <div className="content-wrapper">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="header-section"
+        >
+          <div className="logo-badge">
+            <Play size={20} fill="currentColor" />
+          </div>
+          <h1 className="title">
+            Media <span className="text-gradient">Pro</span>
+          </h1>
+          <p className="subtitle">
+            Premium high-speed downloader for YouTube & Instagram.
+          </p>
+        </motion.div>
 
-              <div className="tabs-container">
-                <button 
-                  className={`tab-btn ${activeTab === 'video' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('video')}
-                >
-                  <Video size={18} /> Download Video
-                </button>
-                <button 
-                  className={`tab-btn ${activeTab === 'audio' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('audio')}
-                >
-                  <Music size={18} /> Extract Audio
-                </button>
-              </div>
+        <form onSubmit={handleFetch} className="glass-panel search-container">
+          {/* Progress Line */}
+          <AnimatePresence>
+            {(loading || downloading) && (
+              <motion.div 
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                className="progress-line"
+              />
+            )}
+          </AnimatePresence>
 
-              <div className="format-selection-area">
-                {activeTab === 'video' ? (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="form-group">
-                    <label>Select Video Quality & Format</label>
-                    <select 
-                      className="glass-select"
-                      value={selectedVideoItag}
-                      onChange={(e) => setSelectedVideoItag(e.target.value)}
-                    >
-                      {mediaInfo.videoFormats?.map((fmt: Format, idx: number) => (
-                        <option key={idx} value={fmt.itag} style={{color: 'black'}}>
-                          {fmt.qualityLabel || 'Standard'} • {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="download-action-row">
-                      <button 
-                        className="glass-button" 
-                        onClick={() => handleDownload(selectedVideoItag, 'video')}
-                        disabled={!selectedVideoItag || downloading}
-                      >
-                        {downloading ? (
-                          <><Loader2 size={18} className="spinner" /> Preparing...</>
-                        ) : (
-                          <><Download size={18} /> Download</>
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="form-group">
-                    <label>Select Audio Extraction Quality</label>
-                    <select 
-                      className="glass-select"
-                      value={selectedAudioItag}
-                      onChange={(e) => setSelectedAudioItag(e.target.value)}
-                    >
-                      {mediaInfo.audioFormats?.map((fmt: any, idx: number) => (
-                        <option key={idx} value={fmt.itag} style={{color: 'black'}}>
-                          {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()} • {Math.round((fmt.bitrate || 0) / 1000)} kbps
-                        </option>
-                      ))}
-                    </select>
-                    <div className="download-action-row">
-                      <button 
-                        className="glass-button" 
-                        onClick={() => handleDownload(selectedAudioItag, 'audio')}
-                        disabled={!selectedAudioItag || downloading}
-                      >
-                        {downloading ? (
-                          <><Loader2 size={18} className="spinner" /> Preparing...</>
-                        ) : (
-                          <><Download size={18} /> Download</>
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
+          <div className="input-group">
+            <div className="input-icon">
+              {detectPlatform(url) === 'instagram' ? <Music size={20} /> : <Video size={20} />}
             </div>
+            <input
+              type="text"
+              placeholder="Paste YouTube or Instagram link here..."
+              className="glass-input"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <button 
+              type="submit" 
+              className={`fetch-button ${loading ? 'loading' : ''}`}
+              disabled={loading || !url}
+            >
+              {loading ? <Loader2 size={18} className="spinner" /> : 'Analyze'}
+            </button>
+          </div>
+        </form>
+
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="error-toast"
+          >
+            {error}
           </motion.div>
         )}
-      </AnimatePresence>
+
+        {/* Media Preview & Options Section */}
+        <AnimatePresence mode="wait">
+          {mediaInfo && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -30, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="results-container"
+            >
+              <div className="glass-panel media-card">
+                <div className="media-header">
+                  {mediaInfo.thumbnail && (
+                    <div className="thumbnail-wrapper">
+                      <img src={mediaInfo.thumbnail} alt={mediaInfo.title} className="thumbnail" />
+                      <div className="platform-badge">
+                        {detectPlatform(url) === 'youtube' ? 'YouTube' : 'Instagram'}
+                      </div>
+                    </div>
+                  )}
+                  <div className="media-info">
+                    <h3 className="media-title">{mediaInfo.title || 'Unknown Title'}</h3>
+                    <p className="media-meta">
+                      {mediaInfo.duration ? `Duration: ${mediaInfo.duration}s` : 'Video Content'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="tabs-container">
+                  <button 
+                    className={`tab-btn ${activeTab === 'video' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('video')}
+                  >
+                    <Video size={18} /> Video
+                  </button>
+                  <button 
+                    className={`tab-btn ${activeTab === 'audio' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('audio')}
+                  >
+                    <Music size={18} /> Audio
+                  </button>
+                </div>
+
+                <div className="format-selection-area">
+                  {activeTab === 'video' ? (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="form-group">
+                      <label>Available Resolutions</label>
+                      <select 
+                        className="glass-select"
+                        value={selectedVideoItag}
+                        onChange={(e) => setSelectedVideoItag(e.target.value)}
+                      >
+                        {mediaInfo.videoFormats?.map((fmt: Format, idx: number) => (
+                          <option key={idx} value={fmt.itag} style={{color: 'black'}}>
+                            {fmt.qualityLabel || 'Standard'} • {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="download-action-row">
+                        <button 
+                          className="glass-button download-btn" 
+                          onClick={() => handleDownload(selectedVideoItag, 'video')}
+                          disabled={!selectedVideoItag || downloading}
+                        >
+                          {downloading ? (
+                            <><Loader2 size={18} className="spinner" /> Preparing...</>
+                          ) : (
+                            <><Download size={18} /> Download Video</>
+                          )}
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="form-group">
+                      <label>Audio Quality Options</label>
+                      <select 
+                        className="glass-select"
+                        value={selectedAudioItag}
+                        onChange={(e) => setSelectedAudioItag(e.target.value)}
+                      >
+                        {mediaInfo.audioFormats?.map((fmt: any, idx: number) => (
+                          <option key={idx} value={fmt.itag} style={{color: 'black'}}>
+                            {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()} • {fmt.bitrate ? `${Math.round(fmt.bitrate / 1000)}kbps` : 'HQ'}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="download-action-row">
+                        <button 
+                          className="glass-button download-btn" 
+                          onClick={() => handleDownload(selectedAudioItag, 'audio')}
+                          disabled={!selectedAudioItag || downloading}
+                        >
+                          {downloading ? (
+                            <><Loader2 size={18} className="spinner" /> Preparing...</>
+                          ) : (
+                            <><Download size={18} /> Download Audio</>
+                          )}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </main>
   );
+
 }
