@@ -7,11 +7,12 @@ import './page.css';
 
 type Format = {
   url: string;
+  itag: number | string;
   qualityLabel?: string;
   bitrate?: number;
   mimeType: string;
-  hasVideo: boolean;
-  hasAudio: boolean;
+  hasVideo?: boolean;
+  hasAudio?: boolean;
 };
 
 export default function Home() {
@@ -21,8 +22,8 @@ export default function Home() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'video' | 'audio'>('video');
   
-  const [selectedVideoItag, setSelectedVideoItag] = useState<number | ''>('');
-  const [selectedAudioItag, setSelectedAudioItag] = useState<number | ''>('');
+  const [selectedVideoItag, setSelectedVideoItag] = useState<number | string | ''>('');
+  const [selectedAudioItag, setSelectedAudioItag] = useState<number | string | ''>('');
 
   const [downloading, setDownloading] = useState(false);
 
@@ -194,7 +195,7 @@ export default function Home() {
                     <select 
                       className="glass-select"
                       value={selectedVideoItag}
-                      onChange={(e) => setSelectedVideoItag(Number(e.target.value))}
+                      onChange={(e) => setSelectedVideoItag(e.target.value)}
                     >
                       {mediaInfo.videoFormats?.map((fmt: Format, idx: number) => (
                         <option key={idx} value={fmt.itag} style={{color: 'black'}}>
@@ -222,7 +223,7 @@ export default function Home() {
                     <select 
                       className="glass-select"
                       value={selectedAudioItag}
-                      onChange={(e) => setSelectedAudioItag(Number(e.target.value))}
+                      onChange={(e) => setSelectedAudioItag(e.target.value)}
                     >
                       {mediaInfo.audioFormats?.map((fmt: any, idx: number) => (
                         <option key={idx} value={fmt.itag} style={{color: 'black'}}>
