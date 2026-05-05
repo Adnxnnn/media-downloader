@@ -7,12 +7,23 @@ import play from 'play-dl';
 
 const execPromise = util.promisify(exec);
 
+// SIMPLE IN-MEMORY CACHE
+const cache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_DURATION = 10 * 60 * 1000; // 10 Minutes
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const url = searchParams.get('url');
 
   if (!url) {
     return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
+  }
+
+  // Check Cache
+  const cached = cache.get(url);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log('Serving from cache:', url);
+    return NextResponse.json(cached.data);
   }
 
   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
@@ -40,7 +51,7 @@ export async function GET(req: Request) {
         const audioFormats = validFormats.filter((f: any) => !f.qualityLabel && f.audioQuality);
         audioFormats.sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
 
-        return NextResponse.json({
+        const responseData = {
           title: info.video_details.title,
           thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1]?.url,
           duration: info.video_details.durationInSec,
@@ -58,7 +69,10 @@ export async function GET(req: Request) {
             bitrate: f.bitrate,
             mimeType: f.mimeType
           })),
-        });
+        };
+
+        cache.set(url, { data: responseData, timestamp: Date.now() });
+        return NextResponse.json(responseData);
       } catch (playError: any) {
         console.warn('play-dl failed, falling back to yt-dlp:', playError.message);
         // Fallback to yt-dlp if play-dl fails (e.g. due to rate limits)
@@ -69,7 +83,7 @@ export async function GET(req: Request) {
         const videoFormatsRaw = validFormats.filter((f: any) => f.vcodec !== 'none');
         const audioFormatsRaw = validFormats.filter((f: any) => f.vcodec === 'none' && f.acodec !== 'none');
 
-        return NextResponse.json({
+        const responseData = {
           title: info.title,
           thumbnail: info.thumbnail,
           duration: info.duration,
@@ -85,7 +99,10 @@ export async function GET(req: Request) {
             qualityLabel: f.format_note || 'Audio',
             mimeType: `audio/${f.ext}`
           })),
-        });
+        };
+
+        cache.set(url, { data: responseData, timestamp: Date.now() });
+        return NextResponse.json(responseData);
       }
 
     } else if (isInstagram) {
@@ -93,9 +110,7 @@ export async function GET(req: Request) {
       const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
 
-      const bestVideoId = info.format_id || 'best';
-      
-      return NextResponse.json({
+      const responseData = {
         title: info.title || info.description?.substring(0, 50) || 'Instagram Media',
         thumbnail: info.thumbnail,
         duration: info.duration || 0,
@@ -111,7 +126,10 @@ export async function GET(req: Request) {
           qualityLabel: 'High Quality MP3',
           mimeType: 'audio/mp3'
         }],
-      });
+      };
+      
+      cache.set(url, { data: responseData, timestamp: Date.now() });
+      return NextResponse.json(responseData);
     }
 
   } catch (error: any) {
