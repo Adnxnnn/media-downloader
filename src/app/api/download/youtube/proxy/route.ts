@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     const ytdlpPath = path.join(process.cwd(), 'node_modules', 'yt-dlp-exec', 'bin', isWindows ? 'yt-dlp.exe' : 'yt-dlp');
 
     if (isYouTube) {
-      const { stdout } = await execPromise(`"${ytdlpPath}" "${ytUrl}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
+      const { stdout } = await execPromise(`"${ytdlpPath}" "${ytUrl}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
       
       const format = info.formats.find((f: any) => String(f.format_id) === itag);
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
       }
       downloadUrl = format.url;
     } else if (isInstagram) {
-      const { stdout } = await execPromise(`"${ytdlpPath}" "${ytUrl}" --dump-single-json --no-warnings`, { maxBuffer: 1024 * 1024 * 10 });
+      const { stdout } = await execPromise(`"${ytdlpPath}" "${ytUrl}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
       
       if (!info.url) {
