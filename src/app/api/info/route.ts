@@ -29,24 +29,24 @@ export async function GET(req: Request) {
       
       const validFormats = info.format.filter(f => f.url && !f.mimeType?.includes('webm'));
       
-      const videoFormats = validFormats.filter(f => f.hasVideo && f.qualityLabel);
-      videoFormats.sort((a, b) => parseInt(b.qualityLabel || '0') - parseInt(a.qualityLabel || '0'));
+      const videoFormats = validFormats.filter((f: any) => f.qualityLabel);
+      videoFormats.sort((a: any, b: any) => parseInt(b.qualityLabel || '0') - parseInt(a.qualityLabel || '0'));
 
-      const audioFormats = validFormats.filter(f => !f.hasVideo && f.audioQuality);
-      audioFormats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+      const audioFormats = validFormats.filter((f: any) => !f.qualityLabel && f.audioQuality);
+      audioFormats.sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
 
       return NextResponse.json({
         title: info.video_details.title,
         thumbnail: info.video_details.thumbnails[info.video_details.thumbnails.length - 1]?.url,
         duration: info.video_details.durationInSec,
-        videoFormats: videoFormats.map(f => ({
+        videoFormats: videoFormats.map((f: any) => ({
           url: f.url,
           itag: f.itag,
           qualityLabel: f.qualityLabel,
           bitrate: f.bitrate,
           mimeType: f.mimeType
         })),
-        audioFormats: audioFormats.map(f => ({
+        audioFormats: audioFormats.map((f: any) => ({
           url: f.url,
           itag: f.itag,
           qualityLabel: f.audioQuality,
