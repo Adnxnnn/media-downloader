@@ -124,6 +124,7 @@ export async function GET(req: Request) {
       console.log('Processing Instagram URL with yt-dlp:', url);
       const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
+      const bestVideoId = info.format_id || 'best';
 
       const responseData = {
         title: info.title || info.description?.substring(0, 50) || 'Instagram Media',
