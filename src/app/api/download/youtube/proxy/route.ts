@@ -53,33 +53,26 @@ export async function GET(req: Request) {
     // 2. Proxy the streaming URL
     const res = await fetch(downloadUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
       }
     });
 
     if (!res.ok) {
-      console.error('Proxy fetch failed with status:', res.status, res.statusText);
-      throw new Error(`Failed to fetch stream: ${res.status} ${res.statusText}`);
+      throw new Error(`Upstream server responded with ${res.status}`);
     }
 
+    const contentType = res.headers.get('content-type') || (type === 'audio' ? 'audio/mpeg' : 'video/mp4');
+    const contentLength = res.headers.get('content-length');
+    const ext = type === 'audio' ? 'mp3' : 'mp4';
+
     const headers = new Headers();
-    headers.set('Content-Type', res.headers.get('Content-Type') || 'application/octet-stream');
-    
-    // Determine extension based on content-type
-    const contentType = res.headers.get('Content-Type') || '';
-    let ext = type === 'audio' ? 'mp3' : 'mp4';
-    
-    if (contentType.includes('audio')) {
-      if (contentType.includes('mp4')) ext = 'm4a';
-      else if (contentType.includes('webm')) ext = 'webm';
-    } else if (contentType.includes('webm')) {
-      ext = 'webm';
+    headers.set('Content-Type', contentType);
+    headers.set('Content-Disposition', `attachment; filename="download_${itag}.${ext}"`);
+    if (contentLength) {
+      headers.set('Content-Length', contentLength);
     }
-    
-    headers.set('Content-Disposition', `attachment; filename="download.${ext}"`);
-    if (res.headers.has('Content-Length')) {
-      headers.set('Content-Length', res.headers.get('Content-Length')!);
-    }
+    headers.set('Accept-Ranges', 'bytes');
+    headers.set('Cache-Control', 'public, max-age=3600');
 
     return new NextResponse(res.body, { headers });
   } catch (error: any) {

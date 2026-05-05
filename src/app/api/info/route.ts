@@ -10,6 +10,7 @@ const execPromise = util.promisify(exec);
 // SIMPLE IN-MEMORY CACHE
 const cache = new Map<string, { data: any, timestamp: number }>();
 const CACHE_DURATION = 10 * 60 * 1000; // 10 Minutes
+const MAX_CACHE_SIZE = 100;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -17,6 +18,12 @@ export async function GET(req: Request) {
 
   if (!url) {
     return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
+  }
+
+  // Prevent memory leak: Limit cache size
+  if (cache.size > MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) cache.delete(oldestKey);
   }
 
   // Check Cache

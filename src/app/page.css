@@ -347,3 +347,4 @@
   font-size: 0.9rem;
 }
 
+.empty-state { text-align: center; color: rgba(255,255,255,0.5); padding: 1rem; font-style: italic; font-size: 0.9rem; }

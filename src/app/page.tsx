@@ -210,58 +210,70 @@ export default function Home() {
                   {activeTab === 'video' ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="form-group">
                       <label>Available Resolutions</label>
-                      <select 
-                        className="glass-select"
-                        value={selectedVideoItag}
-                        onChange={(e) => setSelectedVideoItag(e.target.value)}
-                      >
-                        {mediaInfo.videoFormats?.map((fmt: Format, idx: number) => (
-                          <option key={idx} value={fmt.itag} style={{color: 'black'}}>
-                            {fmt.qualityLabel || 'Standard'} • {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="download-action-row">
-                        <button 
-                          className="glass-button download-btn" 
-                          onClick={() => handleDownload(selectedVideoItag, 'video')}
-                          disabled={!selectedVideoItag || downloading}
-                        >
-                          {downloading ? (
-                            <><Loader2 size={18} className="spinner" /> Preparing...</>
-                          ) : (
-                            <><Download size={18} /> Download Video</>
-                          )}
-                        </button>
-                      </div>
+                      {mediaInfo.videoFormats && mediaInfo.videoFormats.length > 0 ? (
+                        <>
+                          <select 
+                            className="glass-select"
+                            value={selectedVideoItag}
+                            onChange={(e) => setSelectedVideoItag(e.target.value)}
+                          >
+                            {mediaInfo.videoFormats.map((fmt: Format, idx: number) => (
+                              <option key={idx} value={fmt.itag} style={{color: 'black'}}>
+                                {fmt.qualityLabel || 'Standard'} • {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="download-action-row">
+                            <button 
+                              className="glass-button download-btn" 
+                              onClick={() => handleDownload(selectedVideoItag, 'video')}
+                              disabled={!selectedVideoItag || downloading}
+                            >
+                              {downloading ? (
+                                <><Loader2 size={18} className="spinner" /> Preparing...</>
+                              ) : (
+                                <><Download size={18} /> Download Video</>
+                              )}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="empty-state">No video formats found for this link.</p>
+                      )}
                     </motion.div>
                   ) : (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="form-group">
                       <label>Audio Quality Options</label>
-                      <select 
-                        className="glass-select"
-                        value={selectedAudioItag}
-                        onChange={(e) => setSelectedAudioItag(e.target.value)}
-                      >
-                        {mediaInfo.audioFormats?.map((fmt: any, idx: number) => (
-                          <option key={idx} value={fmt.itag} style={{color: 'black'}}>
-                            {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()} • {fmt.bitrate ? `${Math.round(fmt.bitrate / 1000)}kbps` : 'HQ'}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="download-action-row">
-                        <button 
-                          className="glass-button download-btn" 
-                          onClick={() => handleDownload(selectedAudioItag, 'audio')}
-                          disabled={!selectedAudioItag || downloading}
-                        >
-                          {downloading ? (
-                            <><Loader2 size={18} className="spinner" /> Preparing...</>
-                          ) : (
-                            <><Download size={18} /> Download Audio</>
-                          )}
-                        </button>
-                      </div>
+                      {mediaInfo.audioFormats && mediaInfo.audioFormats.length > 0 ? (
+                        <>
+                          <select 
+                            className="glass-select"
+                            value={selectedAudioItag}
+                            onChange={(e) => setSelectedAudioItag(e.target.value)}
+                          >
+                            {mediaInfo.audioFormats.map((fmt: any, idx: number) => (
+                              <option key={idx} value={fmt.itag} style={{color: 'black'}}>
+                                {fmt.mimeType.split(';')[0].split('/')[1].toUpperCase()} • {fmt.bitrate ? `${Math.round(fmt.bitrate / 1000)}kbps` : 'HQ'}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="download-action-row">
+                            <button 
+                              className="glass-button download-btn" 
+                              onClick={() => handleDownload(selectedAudioItag, 'audio')}
+                              disabled={!selectedAudioItag || downloading}
+                            >
+                              {downloading ? (
+                                <><Loader2 size={18} className="spinner" /> Preparing...</>
+                              ) : (
+                                <><Download size={18} /> Download Audio</>
+                              )}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="empty-state">No audio extraction options found.</p>
+                      )}
                     </motion.div>
                   )}
                 </div>
