@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, MonitorPlay, Music, Video, Loader2, Play } from 'lucide-react';
 import './page.css';
@@ -26,6 +26,20 @@ export default function Home() {
   const [selectedAudioItag, setSelectedAudioItag] = useState<number | string | ''>('');
 
   const [downloading, setDownloading] = useState(false);
+
+  // Load from cache on mount
+  useEffect(() => {
+    const cached = localStorage.getItem('lastMediaInfo');
+    if (cached) {
+      try {
+        const { data, url: cachedUrl } = JSON.parse(cached);
+        setMediaInfo(data);
+        setUrl(cachedUrl);
+        if (data.videoFormats?.length > 0) setSelectedVideoItag(data.videoFormats[0].itag);
+        if (data.audioFormats?.length > 0) setSelectedAudioItag(data.audioFormats[0].itag);
+      } catch (e) {}
+    }
+  }, []);
 
   const detectPlatform = (inputUrl: string) => {
     if (inputUrl.includes('youtube.com') || inputUrl.includes('youtu.be')) return 'youtube';
@@ -56,6 +70,8 @@ export default function Home() {
       }
 
       setMediaInfo(data);
+      localStorage.setItem('lastMediaInfo', JSON.stringify({ data, url }));
+
       if (data.videoFormats && data.videoFormats.length > 0) {
         setSelectedVideoItag(data.videoFormats[0].itag);
       }

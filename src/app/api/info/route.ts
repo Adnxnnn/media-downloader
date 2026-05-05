@@ -87,7 +87,7 @@ export async function GET(req: Request) {
       } catch (playError: any) {
         console.warn('play-dl failed, falling back to yt-dlp:', playError.message);
         // Fallback to yt-dlp if play-dl fails (e.g. due to rate limits)
-        const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
+        const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --no-check-certificate --no-playlist --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
         const info = JSON.parse(stdout);
         
         const validFormats = info.formats.filter((f: any) => f.url);
@@ -122,7 +122,7 @@ export async function GET(req: Request) {
 
     } else if (isInstagram) {
       console.log('Processing Instagram URL with yt-dlp:', url);
-      const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
+      const { stdout } = await execPromise(`"${ytdlpPath}" "${url}" --dump-single-json --no-warnings --no-check-certificate --no-playlist --add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" --add-header "Accept-Language:en-US,en;q=0.9"`, { maxBuffer: 1024 * 1024 * 10 });
       const info = JSON.parse(stdout);
       const bestVideoId = info.format_id || 'best';
 
